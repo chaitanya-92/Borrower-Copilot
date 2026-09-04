@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: #0a0a0a;
+  --color-foreground: #ffffff;
+  --color-card: #141414;
+  --color-card-foreground: #ffffff;
+  --color-primary: #d9fe0b;
+  --color-primary-foreground: #000000;
+  --color-secondary: #1a1a1a;
+  --color-secondary-foreground: #ffffff;
+  --color-muted: #2a2a2a;
+  --color-muted-foreground: #a0a0a0;
+  --color-accent: #d9fe0b;
+  --color-accent-foreground: #000000;
+  --color-destructive: #ff4444;
+  --color-border: #2a2a2a;
+  --color-input: #2a2a2a;
+  --color-ring: #d9fe0b;
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-oswald);
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display), system-ui, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+@layer utilities {
+  .text-glow {
+    text-shadow: 0 0 20px rgba(217, 254, 11, 0.4);
+  }
+  .neon-glow {
+    box-shadow: 0 0 20px rgba(217, 254, 11, 0.3), 0 0 40px rgba(217, 254, 11, 0.1);
+  }
+  .grain-bg {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  }
+}
+
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
