@@ -8,15 +8,27 @@ import {
   totalInterestCost,
 } from "../calculations";
 import {
-  computeConfidence,
+  computeConfidenceDetail,
   getRateBand,
   getVerdict,
   normalizeIncome,
   routeProduct,
 } from "../rules";
 import {
+  buildAllInCostExplanation,
+  buildFairRateExplanation,
+  buildNegotiationScript,
+  buildProductRoutingDetail,
+  buildSafeAmountExplanation,
+  buildSafeEmiExplanation,
+  buildStressTestDetail,
+  buildVerdictExplanation,
+  getLoanTypeLabel,
+} from "../explanations";
+import {
   DEFAULT_PROCESSING_FEE_PERCENT,
   DEFAULT_TENURE_MONTHS,
+  STRESS_INCOME_DROP_PERCENT,
   TENURE_OPTIONS_MONTHS,
 } from "@/config/constants";
 
@@ -32,11 +44,12 @@ export function runEngine(input: EngineInput): EngineOutput {
   const employmentType = answers.employmentType!;
   const amountWanted = answers.amountWanted!;
   const existingEmis = answers.existingMonthlyEmis ?? 0;
+  const householdExpenses = answers.monthlyHouseholdExpenses ?? 0;
 
   const netMonthlyIncome = normalizeIncome({
     employmentType,
     netMonthlyIncome: answers.netMonthlyIncome,
-    itrIncome: answers.itrIncome,
+    itrAnnualIncome: answers.itrAnnualIncome,
     cashIncomeEstimate: answers.cashIncomeEstimate,
     incomeMin: answers.incomeMin,
     incomeMax: answers.incomeMax,
@@ -46,12 +59,13 @@ export function runEngine(input: EngineInput): EngineOutput {
 
   const ownsCollateral = answers.ownsCollateral ?? false;
   const collateralValue = answers.collateralValue ?? 0;
+  const originalProduct = answers.loanProductType ?? "unsecured-pl";
 
   const routedProduct = routeProduct({
     amountWanted,
     ownsCollateral,
     collateralValue,
-    currentProduct: answers.loanProductType ?? "unsecured-pl",
+    currentProduct: originalProduct,
   });
 
   const isSecured = routedProduct === "secured-lap";
@@ -65,12 +79,26 @@ export function runEngine(input: EngineInput): EngineOutput {
     ltvPercent,
   });
 
+  const unsecuredBand = getRateBand({
+    employmentType,
+    creditScore: answers.creditScore,
+    isSecured: false,
+  });
+
+  const securedBand = getRateBand({
+    employmentType,
+    creditScore: answers.creditScore,
+    isSecured: true,
+    ltvPercent: ltvPercent ?? 30,
+  });
+
   const midRate = (rateBand.minPercent + rateBand.maxPercent) / 2;
 
   const capacity = computeLoanCapacity({
     employmentType,
     netMonthlyIncome,
     existingMonthlyEmis: existingEmis,
+    monthlyHouseholdExpenses: householdExpenses,
     annualRatePercent: midRate,
     tenureMonths,
     emergencySavingsMonths: answers.emergencySavingsMonths,
@@ -81,8 +109,7 @@ export function runEngine(input: EngineInput): EngineOutput {
   const requestedEmi = calculateEmi(amountWanted, midRate, tenureMonths);
 
   const recentBounced =
-    answers.pastBouncedPayments === true ||
-    answers.bouncedPaymentsLast6Months === true;
+    answers.pastBouncedPayments === true || answers.bouncedPaymentsLast6Months === true;
 
   const verdictResult = getVerdict({
     requestedEmi,
@@ -102,10 +129,21 @@ export function runEngine(input: EngineInput): EngineOutput {
     DEFAULT_PROCESSING_FEE_PERCENT
   );
 
+  const stressTestedIncome = netMonthlyIncome * (1 - STRESS_INCOME_DROP_PERCENT / 100);
+  const stressCapacity = computeLoanCapacity({
+    employmentType,
+    netMonthlyIncome: stressTestedIncome,
+    existingMonthlyEmis: existingEmis,
+    monthlyHouseholdExpenses: householdExpenses,
+    annualRatePercent: midRate,
+    tenureMonths,
+  });
+
   const stressTest = runStressTest({
     employmentType,
     netMonthlyIncome,
     existingMonthlyEmis: existingEmis,
+    monthlyHouseholdExpenses: householdExpenses,
     requestedAmount: amountWanted,
     annualRatePercent: midRate,
     tenureMonths,
@@ -123,7 +161,7 @@ export function runEngine(input: EngineInput): EngineOutput {
     maxLoanForSafeEmi: row.maxLoanForEmi,
   }));
 
-  const confidence = computeConfidence(answers);
+  const confidenceDetail = computeConfidenceDetail(answers);
 
   const hasOffer =
     answers.lenderOfferRate != null &&
@@ -153,6 +191,35 @@ export function runEngine(input: EngineInput): EngineOutput {
   const useSafe =
     verdictResult.verdict === "borrow-less" || verdictResult.verdict === "dont-borrow";
 
+  const productRouting = buildProductRoutingDetail({
+    originalProduct,
+    routedProduct,
+    amountWanted,
+    collateralValue,
+    unsecuredBand,
+    securedBand,
+  });
+
+  const stressTestDetail = buildStressTestDetail({
+    netMonthlyIncome,
+    stressTestedIncome,
+    currentSafeEmi: stressCapacity.safeMaxEmi,
+    requestedEmi: Math.round(requestedEmi),
+  });
+
+  const whyRecommendation = buildVerdictExplanation(
+    verdictResult,
+    Math.round(requestedEmi),
+    capacity.safeMaxEmi
+  );
+
+  const negotiationScript = buildNegotiationScript({
+    rateBand,
+    safeEmi: capacity.safeMaxEmi,
+    safeAmount: capacity.safeMaxAmount,
+    employmentType,
+  });
+
   return {
     verdict: {
       verdict: verdictResult.verdict,
@@ -165,7 +232,7 @@ export function runEngine(input: EngineInput): EngineOutput {
       lenderMaxEmi: capacity.lenderMaxEmi,
       safeMaxEmi: capacity.safeMaxEmi,
       recommendation: useSafe
-        ? "Use the safe-max amount — it leaves room for life’s surprises."
+        ? "Use the borrower-safe number — it leaves room for life's surprises."
         : "Your ask fits the safe ceiling — you can proceed at this amount.",
     },
     fairRate: {
@@ -180,11 +247,40 @@ export function runEngine(input: EngineInput): EngineOutput {
       tenureComparisons,
       stressTest,
     },
-    confidence,
+    confidence: confidenceDetail.level,
+    confidenceDetail,
+    explanations: {
+      safeEmi: buildSafeEmiExplanation({
+        capacity,
+        existingEmis,
+        householdExpenses,
+        netMonthlyIncome,
+        employmentType,
+      }),
+      safeAmount: buildSafeAmountExplanation({
+        capacity,
+        annualRatePercent: midRate,
+        tenureMonths,
+      }),
+      fairRate: buildFairRateExplanation(rateBand),
+      allInCost: buildAllInCostExplanation(aprBand.minPercent, aprBand.maxPercent),
+    },
+    productRouting,
+    stressTestDetail,
     negotiationCard: {
+      loanType: getLoanTypeLabel(routedProduct),
+      requestedAmount: amountWanted,
       fairRateBand: rateBand,
       safeEmiCeiling: capacity.safeMaxEmi,
       safeLoanAmount: capacity.safeMaxAmount,
+      lenderMaxAmount: capacity.lenderMaxAmount,
+      recommendedTenureMonths: tenureMonths,
+      estimatedAllInAnnualisedCost: aprBand,
+      confidence: confidenceDetail.level,
+      whyRecommendation,
+      whatToAskLender: negotiationScript,
+      disclaimer:
+        "Indicative estimate — not a loan approval or guarantee. Borrower Copilot provides guidance based on the information you provide; it is not a credit decision or substitute for a lender's final terms.",
       lenderOfferComparison,
     },
   };

@@ -7,11 +7,9 @@ export function Header({ className }: { className?: string }) {
       <div className="mx-auto flex max-w-5xl items-center justify-between px-6">
         <Link href="/" className="flex items-center gap-2">
           <span className="font-display text-2xl font-bold uppercase tracking-wider text-primary">
-            Sahi Rate
+          Borrower Copilot
           </span>
-          <span className="hidden text-xs text-muted-foreground sm:inline">
-            Borrower Copilot
-          </span>
+
         </Link>
       </div>
     </header>

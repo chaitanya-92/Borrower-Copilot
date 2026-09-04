@@ -11,6 +11,10 @@ import {
 import type { AssessmentAnswers, EngineOutput } from "@/types/assessment";
 import { EMPTY_ASSESSMENT } from "@/types/assessment";
 import { runEngine } from "@/domain/engine";
+import {
+  clampQuestionIndex,
+  getActiveQuestions,
+} from "@/features/assessment/utils/getVisibleQuestions";
 
 interface AssessmentContextValue {
   answers: AssessmentAnswers;
@@ -20,8 +24,11 @@ interface AssessmentContextValue {
   loadFixture: (answers: AssessmentAnswers) => void;
   results: EngineOutput | null;
   computeResults: () => EngineOutput | null;
-  currentStep: number;
-  setCurrentStep: (step: number) => void;
+  currentQuestionIndex: number;
+  setCurrentQuestionIndex: (index: number) => void;
+  activeQuestions: string[];
+  goToNextQuestion: () => boolean;
+  goToPreviousQuestion: () => void;
 }
 
 const AssessmentContext = createContext<AssessmentContextValue | null>(null);
@@ -29,7 +36,16 @@ const AssessmentContext = createContext<AssessmentContextValue | null>(null);
 export function AssessmentProvider({ children }: { children: ReactNode }) {
   const [answers, setAnswers] = useState<AssessmentAnswers>(EMPTY_ASSESSMENT);
   const [results, setResults] = useState<EngineOutput | null>(null);
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentQuestionIndex, setCurrentQuestionIndexState] = useState(0);
+
+  const activeQuestions = useMemo(() => getActiveQuestions(answers), [answers]);
+
+  const setCurrentQuestionIndex = useCallback(
+    (index: number) => {
+      setCurrentQuestionIndexState(clampQuestionIndex(answers, index));
+    },
+    [answers]
+  );
 
   const updateAnswers = useCallback((partial: Partial<AssessmentAnswers>) => {
     setAnswers((prev) => {
@@ -41,23 +57,37 @@ export function AssessmentProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const skipField = useCallback((field: string) => {
-    setAnswers((prev) => ({
-      ...prev,
-      skippedFields: prev.skippedFields.includes(field)
-        ? prev.skippedFields
-        : [...prev.skippedFields, field],
-    }));
+    setAnswers((prev) => {
+      if (prev.skippedFields.includes(field)) return prev;
+      const nextAnswers = {
+        ...prev,
+        skippedFields: [...prev.skippedFields, field],
+      };
+
+      setCurrentQuestionIndexState((prevIndex) => {
+        const prevActive = getActiveQuestions(prev);
+        const nextActive = getActiveQuestions(nextAnswers);
+        const currentField = prevActive[prevIndex];
+        if (currentField === field) {
+          return Math.min(prevIndex, Math.max(0, nextActive.length - 1));
+        }
+        const newIdx = nextActive.indexOf(currentField);
+        return newIdx >= 0 ? newIdx : clampQuestionIndex(nextAnswers, prevIndex);
+      });
+
+      return nextAnswers;
+    });
   }, []);
 
   const resetAssessment = useCallback(() => {
     setAnswers(EMPTY_ASSESSMENT);
     setResults(null);
-    setCurrentStep(0);
+    setCurrentQuestionIndexState(0);
   }, []);
 
   const loadFixture = useCallback((fixture: AssessmentAnswers) => {
     setAnswers(fixture);
-    setCurrentStep(0);
+    setCurrentQuestionIndexState(0);
     setResults(null);
   }, []);
 
@@ -66,6 +96,20 @@ export function AssessmentProvider({ children }: { children: ReactNode }) {
     setResults(output);
     return output;
   }, [answers]);
+
+  const goToNextQuestion = useCallback(() => {
+    const nextIndex = currentQuestionIndex + 1;
+    if (nextIndex >= activeQuestions.length) {
+      return false;
+    }
+    setCurrentQuestionIndexState(nextIndex);
+    return true;
+  }, [activeQuestions.length, currentQuestionIndex]);
+
+  const goToPreviousQuestion = useCallback(() => {
+    if (currentQuestionIndex <= 0) return;
+    setCurrentQuestionIndexState(currentQuestionIndex - 1);
+  }, [currentQuestionIndex]);
 
   const value = useMemo(
     () => ({
@@ -76,8 +120,11 @@ export function AssessmentProvider({ children }: { children: ReactNode }) {
       loadFixture,
       results,
       computeResults,
-      currentStep,
-      setCurrentStep,
+      currentQuestionIndex,
+      setCurrentQuestionIndex,
+      activeQuestions,
+      goToNextQuestion,
+      goToPreviousQuestion,
     }),
     [
       answers,
@@ -87,7 +134,11 @@ export function AssessmentProvider({ children }: { children: ReactNode }) {
       loadFixture,
       results,
       computeResults,
-      currentStep,
+      currentQuestionIndex,
+      setCurrentQuestionIndex,
+      activeQuestions,
+      goToNextQuestion,
+      goToPreviousQuestion,
     ]
   );
 

@@ -1,84 +1,145 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { useAssessment } from "@/state/AssessmentProvider";
-import { getVisibleSteps } from "@/features/assessment/utils/getVisibleQuestions";
-import { StepLoanDetails } from "./StepLoanDetails";
-import { StepAboutYou } from "./StepAboutYou";
-import { StepIncome } from "./StepIncome";
-import { StepObligations } from "./StepObligations";
-import { StepHousehold } from "./StepHousehold";
-import { StepCollateral } from "./StepCollateral";
-import { StepOptional } from "./StepOptional";
-
-const STEP_COMPONENTS = [
-  StepLoanDetails,
-  StepAboutYou,
-  StepIncome,
-  StepObligations,
-  StepHousehold,
-  StepCollateral,
-  StepOptional,
-];
-
-const STEP_IDS = ["loan", "about", "income", "obligations", "household", "collateral", "optional"];
+import { getQuestionById } from "@/config/assessmentQuestions";
+import { clampQuestionIndex } from "@/features/assessment/utils/getVisibleQuestions";
+import { validateQuestion } from "@/features/assessment/utils/validateQuestion";
+import { QuestionField } from "./QuestionField";
+import { WhyWeAsk } from "./WhyWeAsk";
 
 export function AssessmentShell() {
   const router = useRouter();
-  const { answers, currentStep, setCurrentStep, computeResults } = useAssessment();
+  const {
+    answers,
+    activeQuestions,
+    currentQuestionIndex,
+    setCurrentQuestionIndex,
+    updateAnswers,
+    skipField,
+    goToNextQuestion,
+    goToPreviousQuestion,
+    computeResults,
+  } = useAssessment();
 
-  const visibleSteps = getVisibleSteps(answers);
-  const visibleStepIds = visibleSteps.map((s) => s.id);
-  const currentStepId = STEP_IDS[currentStep];
-  const visibleIndex = visibleStepIds.indexOf(currentStepId);
-  const progress = visibleIndex >= 0 ? ((visibleIndex + 1) / visibleSteps.length) * 100 : 0;
+  const [error, setError] = useState<string | null>(null);
 
-  const StepComponent = STEP_COMPONENTS[currentStep] ?? StepLoanDetails;
-  const stepMeta = visibleSteps.find((s) => s.id === currentStepId) ?? visibleSteps[0];
+  useEffect(() => {
+    setCurrentQuestionIndex(clampQuestionIndex(answers, currentQuestionIndex));
+  }, [activeQuestions.length, answers, currentQuestionIndex, setCurrentQuestionIndex]);
 
-  const goNext = () => {
-    const nextVisibleIdx = visibleIndex + 1;
-    if (nextVisibleIdx >= visibleSteps.length) {
+  const currentFieldId = activeQuestions[currentQuestionIndex];
+  const question = currentFieldId ? getQuestionById(currentFieldId) : undefined;
+  const total = activeQuestions.length;
+  const progress = total > 0 ? ((currentQuestionIndex + 1) / total) * 100 : 0;
+  const isLast = currentQuestionIndex >= total - 1;
+
+  if (!question || total === 0) {
+    return (
+      <PageContainer>
+        <p className="text-muted-foreground">Loading assessment…</p>
+      </PageContainer>
+    );
+  }
+
+  const handleContinue = () => {
+    const validationError = validateQuestion(currentFieldId, answers);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+    setError(null);
+
+    if (isLast) {
       computeResults();
       router.push("/results");
       return;
     }
-    const nextId = visibleSteps[nextVisibleIdx].id;
-    const nextGlobalIdx = STEP_IDS.indexOf(nextId);
-    setCurrentStep(nextGlobalIdx >= 0 ? nextGlobalIdx : 0);
+    goToNextQuestion();
   };
 
-  const goBack = () => {
-    if (visibleIndex <= 0) return;
-    const prevId = visibleSteps[visibleIndex - 1].id;
-    const prevGlobalIdx = STEP_IDS.indexOf(prevId);
-    setCurrentStep(prevGlobalIdx >= 0 ? prevGlobalIdx : 0);
+  const handleSkip = () => {
+    if (!question.skippable) return;
+    setError(null);
+    skipField(currentFieldId);
+    if (isLast) {
+      computeResults();
+      router.push("/results");
+    }
   };
 
-  const isLast = visibleIndex >= visibleSteps.length - 1;
+  const handleBack = () => {
+    setError(null);
+    goToPreviousQuestion();
+  };
 
   return (
-    <PageContainer>
-      <div className="mb-8">
-        <p className="text-xs uppercase tracking-wider text-primary">
-          Step {visibleIndex + 1} of {visibleSteps.length}
+    <PageContainer className="max-w-2xl pb-24">
+      <header className="mb-10">
+        <p className="text-xs font-medium uppercase tracking-[0.2em] text-primary">
+          Step {currentQuestionIndex + 1} of {total}
         </p>
-        <h1 className="mt-2 font-display text-3xl font-bold">{stepMeta?.title}</h1>
-        <p className="mt-1 text-muted-foreground">{stepMeta?.description}</p>
-        <Progress value={progress} className="mt-4" />
-      </div>
+        <Progress value={progress} className="mt-4 h-1.5" aria-label="Assessment progress" />
+      </header>
 
-      <StepComponent />
+      <article className="space-y-6">
+        <p className="text-xs font-medium uppercase tracking-[0.15em] text-muted-foreground">
+          {question.category}
+        </p>
 
-      <div className="mt-12 flex justify-between no-print">
-        <Button variant="secondary" onClick={goBack} disabled={visibleIndex <= 0}>
-          Back
+        <QuestionField
+          question={question}
+          answers={answers}
+          error={error}
+          onUpdate={(partial) => {
+            setError(null);
+            updateAnswers(partial);
+          }}
+        />
+
+        {question.description && (
+          <p className="text-sm leading-relaxed text-muted-foreground">{question.description}</p>
+        )}
+
+        {question.whyAsk && <WhyWeAsk text={question.whyAsk} />}
+      </article>
+
+      <footer className="mt-14 flex flex-col-reverse gap-4 sm:flex-row sm:items-center sm:justify-between no-print">
+        <Button
+          variant="secondary"
+          onClick={handleBack}
+          disabled={currentQuestionIndex <= 0}
+          aria-label="Go to previous question"
+          className="w-full sm:w-auto"
+        >
+          ← Back
         </Button>
-        <Button onClick={goNext}>{isLast ? "See Results" : "Continue"}</Button>
-      </div>
+
+        <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+          {question.skippable && (
+            <Button
+              variant="link"
+              type="button"
+              onClick={handleSkip}
+              className="order-2 sm:order-1 text-muted-foreground hover:text-foreground"
+              aria-label={`Skip question: ${question.label}`}
+            >
+              Skip
+            </Button>
+          )}
+          <Button
+            onClick={handleContinue}
+            className="order-1 sm:order-2 w-full sm:w-auto"
+            aria-label={isLast ? "See results" : "Continue to next question"}
+          >
+            {isLast ? "See Results →" : "Continue →"}
+          </Button>
+        </div>
+      </footer>
     </PageContainer>
   );
 }
