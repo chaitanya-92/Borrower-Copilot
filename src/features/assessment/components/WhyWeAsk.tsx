@@ -1,29 +1,23 @@
-"use client";
-
-import { useState } from "react";
-import { ChevronDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Info } from "lucide-react";
 
 export function WhyWeAsk({ text }: { text: string }) {
-  const [open, setOpen] = useState(false);
-
   return (
-    <div className="mt-6 border-t border-border/60 pt-4">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between text-left text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
-        aria-expanded={open}
-      >
-        <span>Why we ask</span>
-        <ChevronDown
-          className={cn("h-4 w-4 transition-transform", open && "rotate-180")}
-          aria-hidden
-        />
-      </button>
-      {open && (
-        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{text}</p>
-      )}
+    <div className="mt-7 rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+      <div className="flex items-start gap-3">
+        <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+          <Info className="h-4 w-4" />
+        </div>
+
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-blue-700">
+            Why we ask
+          </p>
+
+          <p className="mt-1.5 text-sm leading-6 text-slate-600">
+            {text}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
