@@ -1,20 +1,17 @@
 import type { Metadata } from "next";
-import { Oswald, Inter } from "next/font/google";
+import { DM_Sans } from "next/font/google";
+
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { AssessmentProvider } from "@/state/AssessmentProvider";
 import { TooltipProvider } from "@/components/ui/tooltip";
+
 import "./globals.css";
 
-const oswald = Oswald({
+const dmSans = DM_Sans({
   subsets: ["latin"],
-  variable: "--font-oswald",
+  variable: "--font-dm-sans",
   weight: ["400", "500", "600", "700"],
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
@@ -23,10 +20,14 @@ export const metadata: Metadata = {
     "Know before you borrow. Should you borrow, how much, at what rate, and what EMI?",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
-    <html lang="en" className={`${oswald.variable} ${inter.variable}`}>
-      <body className="min-h-screen grain-bg antialiased">
+    <html lang="en" className={dmSans.variable}>
+      <body className="min-h-screen antialiased">
         <AssessmentProvider>
           <TooltipProvider>
             <Header />
