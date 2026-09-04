@@ -1,4 +1,4 @@
-# Sahi Rate — Borrower Copilot
+# Borrower Copilot
 
 A Next.js web app for Indian borrowers that answers four questions before walking into a lender:
 

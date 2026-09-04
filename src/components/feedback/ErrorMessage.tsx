@@ -1,7 +1,21 @@
-export function ErrorMessage({ message }: { message: string }) {
+export function ErrorMessage({
+  message,
+  id,
+  children,
+}: {
+  message?: string;
+  id?: string;
+  children?: React.ReactNode;
+}) {
+  const text = message ?? children;
+  if (!text) return null;
   return (
-    <div className="rounded-md border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-      {message}
-    </div>
+    <p
+      id={id}
+      role="alert"
+      className="mt-2 text-sm text-destructive"
+    >
+      {text}
+    </p>
   );
 }

@@ -18,7 +18,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Sahi Rate — Borrower Copilot",
+  title: "Borrower Copilot",
   description:
     "Know before you borrow. Should you borrow, how much, at what rate, and what EMI?",
 };

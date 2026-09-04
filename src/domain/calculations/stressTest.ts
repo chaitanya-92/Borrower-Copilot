@@ -7,6 +7,7 @@ export interface StressTestInput {
   employmentType: EmploymentType;
   netMonthlyIncome: number;
   existingMonthlyEmis: number;
+  monthlyHouseholdExpenses?: number | null;
   requestedAmount: number;
   annualRatePercent: number;
   tenureMonths: number;
@@ -31,6 +32,7 @@ export function runStressTest(input: StressTestInput): StressTestResult {
     employmentType: input.employmentType,
     netMonthlyIncome: reducedIncome,
     existingMonthlyEmis: input.existingMonthlyEmis,
+    monthlyHouseholdExpenses: input.monthlyHouseholdExpenses,
     annualRatePercent: input.annualRatePercent,
     tenureMonths: input.tenureMonths,
   });

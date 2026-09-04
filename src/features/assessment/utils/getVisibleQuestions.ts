@@ -1,5 +1,5 @@
-import type { AssessmentAnswers, EmploymentType } from "@/types/assessment";
-import { LARGE_LOAN_THRESHOLD } from "@/config/constants";
+import type { AssessmentAnswers } from "@/types/assessment";
+import { ALL_QUESTIONS, shouldShowCollateralQuestions } from "@/config/assessmentQuestions";
 
 export interface AssessmentStep {
   id: string;
@@ -18,10 +18,7 @@ export const ASSESSMENT_STEPS: AssessmentStep[] = [
 ];
 
 export function shouldShowCollateralStep(answers: AssessmentAnswers): boolean {
-  return (
-    answers.employmentType === "self-employed" &&
-    (answers.amountWanted ?? 0) > LARGE_LOAN_THRESHOLD
-  );
+  return shouldShowCollateralQuestions(answers);
 }
 
 export function getVisibleSteps(answers: AssessmentAnswers): AssessmentStep[] {
@@ -31,52 +28,29 @@ export function getVisibleSteps(answers: AssessmentAnswers): AssessmentStep[] {
   });
 }
 
-export function getVisibleQuestions(answers: AssessmentAnswers): string[] {
-  const fields: string[] = [
-    "loanPurpose",
-    "amountWanted",
-    "loanProductType",
-    "age",
-    "employmentType",
-  ];
-
-  const emp = answers.employmentType;
-
-  if (emp === "salaried") {
-    fields.push("netMonthlyIncome", "employerTenureMonths", "incomeStability");
-  } else if (emp === "self-employed") {
-    fields.push("itrIncome", "cashIncomeEstimate", "yearsInBusiness");
-    if (shouldShowCollateralStep(answers)) {
-      fields.push("ownsCollateral", "collateralValue");
-    }
-  } else if (emp === "informal") {
-    fields.push("incomeMin", "incomeMax", "platformSourceCount", "hasHighCostDebt", "bouncedPaymentsLast6Months");
-  }
-
-  fields.push(
-    "existingMonthlyEmis",
-    "monthlyHouseholdExpenses",
-    "creditScore",
-    "emergencySavingsMonths",
-    "pastBouncedPayments",
-    "cardUtilizationPercent",
-    "upcomingLargeExpenses",
-    "loanProductivityReturn",
-    "lenderOfferRate"
-  );
-
-  return fields;
+function isQuestionVisible(answers: AssessmentAnswers, questionId: string): boolean {
+  const def = ALL_QUESTIONS.find((q) => q.id === questionId);
+  if (!def) return false;
+  if (def.visible && !def.visible(answers)) return false;
+  return true;
 }
 
-export function getIncomeFields(employmentType: EmploymentType | null): string[] {
-  switch (employmentType) {
-    case "salaried":
-      return ["netMonthlyIncome", "employerTenureMonths", "incomeStability"];
-    case "self-employed":
-      return ["itrIncome", "cashIncomeEstimate", "yearsInBusiness"];
-    case "informal":
-      return ["incomeMin", "incomeMax", "platformSourceCount"];
-    default:
-      return [];
-  }
+/** All questions that could appear for this profile (before skip filtering). */
+export function getVisibleQuestions(answers: AssessmentAnswers): string[] {
+  return ALL_QUESTIONS.filter((q) => isQuestionVisible(answers, q.id)).map((q) => q.id);
+}
+
+/** Active questions — visible and not skipped. Used for rendering and progress. */
+export function getActiveQuestions(answers: AssessmentAnswers): string[] {
+  return getVisibleQuestions(answers).filter((id) => !answers.skippedFields.includes(id));
+}
+
+export function getActiveQuestionIndex(answers: AssessmentAnswers, questionId: string): number {
+  return getActiveQuestions(answers).indexOf(questionId);
+}
+
+export function clampQuestionIndex(answers: AssessmentAnswers, index: number): number {
+  const active = getActiveQuestions(answers);
+  if (active.length === 0) return 0;
+  return Math.max(0, Math.min(index, active.length - 1));
 }

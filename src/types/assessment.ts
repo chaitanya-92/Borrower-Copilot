@@ -37,7 +37,8 @@ export interface AssessmentAnswers {
 
   // Self-employed branch
   yearsInBusiness: number | null;
-  itrIncome: number | null;
+  /** Annual income as declared in ITR (normalized to monthly in domain layer) */
+  itrAnnualIncome: number | null;
   cashIncomeEstimate: number | null;
   ownsCollateral: boolean | null;
   collateralValue: number | null;
@@ -78,7 +79,7 @@ export const EMPTY_ASSESSMENT: AssessmentAnswers = {
   employerTenureMonths: null,
   incomeStability: null,
   yearsInBusiness: null,
-  itrIncome: null,
+  itrAnnualIncome: null,
   cashIncomeEstimate: null,
   ownsCollateral: null,
   collateralValue: null,
@@ -151,9 +152,18 @@ export interface VerdictOutput {
 }
 
 export interface NegotiationCardOutput {
+  loanType: string;
+  requestedAmount: number;
   fairRateBand: RateBand;
   safeEmiCeiling: number;
   safeLoanAmount: number;
+  lenderMaxAmount: number;
+  recommendedTenureMonths: number;
+  estimatedAllInAnnualisedCost: { minPercent: number; maxPercent: number };
+  confidence: ConfidenceLevel;
+  whyRecommendation: string;
+  whatToAskLender: string;
+  disclaimer: string;
   lenderOfferComparison: {
     fairTotalInterest: number;
     offerTotalInterest: number;
@@ -162,11 +172,53 @@ export interface NegotiationCardOutput {
   } | null;
 }
 
+export interface MetricExplanation {
+  label: string;
+  value: string;
+  summary: string;
+}
+
+export interface ProductRoutingOutput {
+  originalProduct: LoanProductType;
+  routedProduct: LoanProductType;
+  wasRouted: boolean;
+  reason: string;
+  unsecuredRateBand: RateBand;
+  securedRateBand: RateBand;
+}
+
+export interface ConfidenceDetail {
+  level: ConfidenceLevel;
+  headline: string;
+  summary: string;
+  knownFields: string[];
+  unknownFields: string[];
+  improvements: string[];
+}
+
+export interface StressTestDetail {
+  currentIncome: number;
+  stressTestedIncome: number;
+  currentSafeEmi: number;
+  requestedEmi: number;
+  stillManageable: boolean;
+  summary: string;
+}
+
 export interface EngineOutput {
   verdict: VerdictOutput;
   loanCapacity: LoanCapacityOutput;
   fairRate: FairRateOutput;
   emi: EmiOutput;
   confidence: ConfidenceLevel;
+  confidenceDetail: ConfidenceDetail;
+  explanations: {
+    safeEmi: MetricExplanation;
+    safeAmount: MetricExplanation;
+    fairRate: MetricExplanation;
+    allInCost: MetricExplanation;
+  };
+  productRouting: ProductRoutingOutput;
+  stressTestDetail: StressTestDetail;
   negotiationCard: NegotiationCardOutput;
 }

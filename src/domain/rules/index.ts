@@ -6,4 +6,4 @@ export {
 export { getRateBand, routeProduct, UNKNOWN_SCORE_BAND_WIDEN_POINTS } from "./rate.rules";
 export { normalizeIncome } from "./income.rules";
 export { getVerdict } from "./verdict.rules";
-export { computeConfidence, getBranchOptionalFields } from "./confidence.rules";
+export { computeConfidence, computeConfidenceDetail, getBranchOptionalFields, isAnswered, isUnknown } from "./confidence.rules";
