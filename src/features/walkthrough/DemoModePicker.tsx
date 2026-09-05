@@ -17,8 +17,7 @@ const personas = [
     location: "Bengaluru",
     description: "Stable income · existing car EMI",
     number: "01",
-    image:
-      "https://openclipart.org/image/800px/221175",
+    initials: "P",
     fixture: priyaFixture,
   },
   {
@@ -27,8 +26,7 @@ const personas = [
     location: "Mysuru",
     description: "Business income · owns shop",
     number: "02",
-    image:
-      "https://img.magnific.com/premium-vector/beautiful-professional-cartoon-character-design-vector-illustration_1253044-33615.jpg?q=80&semt=ais_hybrid&w=740",
+    initials: "R",
     fixture: raviFixture,
   },
   {
@@ -37,8 +35,7 @@ const personas = [
     location: "Hubballi",
     description: "Variable income · existing debt",
     number: "03",
-    image:
-      "https://cdn.vectorstock.com/i/500p/62/65/woman-driving-delivery-motorcycle-vector-46766265.jpg",
+    initials: "A",
     fixture: anitaFixture,
   },
 ];
@@ -48,72 +45,106 @@ export function DemoModePicker() {
 
   return (
     <section className="mt-10">
-      <div className="mb-5 flex items-end justify-between">
+      <div className="overflow-hidden border-y border-slate-200 bg-white">
+        <div className="grid md:grid-cols-3">
+          {personas.map((persona, index) => (
+            <Link
+              key={persona.name}
+              href="/assessment"
+              onClick={() => loadFixture(persona.fixture)}
+              className={`
+                group relative
+                border-slate-200
+                focus:outline-none
+                focus-visible:z-10
+                focus-visible:ring-2
+                focus-visible:ring-blue-600
+                focus-visible:ring-offset-2
+                ${
+                  index !== 0
+                    ? "border-t md:border-l md:border-t-0"
+                    : ""
+                }
+              `}
+            >
+              <article
+                className="
+                  relative h-full
+                  px-6 py-7
+                  transition-colors duration-200
+                  hover:bg-slate-50/70
+                "
+              >
+                {/* Top */}
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold tracking-[0.14em] text-slate-400">
+                    {persona.number}
+                  </span>
 
-        <span className="hidden text-xs font-medium text-slate-400 sm:block">
-          3 profiles
-        </span>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-3">
-        {personas.map((persona) => (
-          <Link
-            key={persona.name}
-            href="/assessment"
-            onClick={() => loadFixture(persona.fixture)}
-            className="group"
-          >
-            <article className="h-full overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all duration-200 hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg">
-              
-              {/* Illustration */}
-              <div className="relative flex h-52 items-end justify-center overflow-hidden bg-slate-100">
-                <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full border-[10px] border-slate-200" />
-
-                <div className="absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-blue-50" />
-
-                <span className="absolute left-4 top-4 z-20 text-xs font-bold text-slate-400">
-                  {persona.number}
-                </span>
-
-                <img
-                  src={persona.image}
-                  alt={`${persona.name} demo borrower`}
-                  className="relative z-10 h-48 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
-                />
-              </div>
-
-              {/* Details */}
-              <div className="p-5">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold tracking-tight text-slate-950">
-                      {persona.name}
-                    </h3>
-
-                    <p className="mt-0.5 text-xs font-medium text-blue-600">
-                      {persona.role} · {persona.location}
-                    </p>
-                  </div>
-
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-sm text-slate-500 transition-all group-hover:border-blue-200 group-hover:bg-blue-50 group-hover:text-blue-600">
+                  <span
+                    className="
+                      flex h-8 w-8 items-center justify-center
+                      rounded-full
+                      border border-slate-200
+                      text-sm text-slate-400
+                      transition-all duration-200
+                      group-hover:border-blue-200
+                      group-hover:bg-blue-600
+                      group-hover:text-white
+                    "
+                  >
                     →
                   </span>
                 </div>
 
-                <p className="mt-3 text-sm leading-5 text-slate-500">
-                  {persona.description}
-                </p>
+                {/* Initial */}
+                <div className="mt-8 flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-lg font-semibold text-slate-700 transition-colors duration-200 group-hover:bg-blue-50 group-hover:text-blue-600">
+                  {persona.initials}
+                </div>
 
-                <div className="mt-5 border-t border-slate-100 pt-3">
-                  <span className="text-xs font-semibold text-slate-700">
-                    Try this profile
+                {/* Identity */}
+                <div className="mt-5">
+                  <h3 className="text-xl font-semibold tracking-[-0.03em] text-slate-950">
+                    {persona.name}
+                  </h3>
+
+                  <p className="mt-1 text-xs font-medium text-blue-600">
+                    {persona.role}
+                    <span className="mx-1.5 text-slate-300">·</span>
+                    {persona.location}
+                  </p>
+                </div>
+
+                {/* Financial context */}
+                <div className="mt-5 border-t border-slate-100 pt-4">
+                  <p className="text-sm leading-6 text-slate-500">
+                    {persona.description}
+                  </p>
+                </div>
+
+                {/* CTA */}
+                <div className="mt-6 flex items-center gap-2">
+                  <span className="text-xs font-semibold text-slate-900">
+                    Explore profile
+                  </span>
+
+                  <span className="text-xs text-slate-400 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-blue-600">
+                    →
                   </span>
                 </div>
-              </div>
-            </article>
-          </Link>
-        ))}
+
+                {/* Hover indicator */}
+                <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-blue-600 transition-all duration-300 group-hover:w-full" />
+              </article>
+            </Link>
+          ))}
+        </div>
       </div>
+
+      {/* Context */}
+      <p className="mt-4 text-center text-xs text-slate-400">
+        Each profile produces a different borrowing recommendation.
+      </p>
     </section>
   );
 }
