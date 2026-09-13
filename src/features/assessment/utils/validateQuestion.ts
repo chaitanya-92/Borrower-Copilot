@@ -23,11 +23,11 @@ export function validateQuestion(
     return null;
   }
 
-  if (def.required && (raw === null || raw === undefined || raw === "")) {
+  if (def.required && (raw === null || raw === undefined)) {
     return `${def.label.replace(/\?$/, "")} is required.`;
   }
 
-  if (raw === null || raw === undefined || raw === "") return null;
+  if (raw === null || raw === undefined) return null;
 
   if (def.inputType === "number" && typeof raw === "number") {
     if (def.min != null && raw < def.min) {
@@ -63,7 +63,7 @@ function hasValue(fieldId: string, answers: AssessmentAnswers): boolean {
   if (!def.required) return true;
 
   const raw = answers[fieldId as keyof AssessmentAnswers];
-  if (raw === null || raw === undefined || raw === "") return false;
+  if (raw === null || raw === undefined) return false;
   if (def.inputType === "creditScore" && !def.required) return true;
   return true;
 }

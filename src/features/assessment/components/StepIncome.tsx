@@ -82,9 +82,9 @@ export function StepIncome() {
             id="itr"
             type="number"
             placeholder="Verifiable income from ITR"
-            value={answers.itrIncome ?? ""}
+            value={answers.itrAnnualIncome ?? ""}
             onChange={(e) =>
-              updateAnswers({ itrIncome: e.target.value ? Number(e.target.value) : null })
+              updateAnswers({ itrAnnualIncome: e.target.value ? Number(e.target.value) : null })
             }
           />
         </div>
