@@ -11,12 +11,7 @@ export interface IncomeNormalizationInput {
   coBorrowerIncome: number | null;
 }
 
-/**
- * Self-employed: use ITR (verifiable) over cash estimate when they diverge.
- * ITR is stored as annual income and normalized to monthly here.
- * Informal: use midpoint of income range.
- * Co-applicant income only added if explicitly committed co-borrower.
- */
+
 export function normalizeIncome(input: IncomeNormalizationInput): number {
   let income = 0;
 

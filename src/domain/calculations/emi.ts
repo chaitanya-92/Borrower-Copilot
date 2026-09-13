@@ -1,7 +1,4 @@
-/**
- * Standard reducing-balance EMI calculation.
- * EMI = P × r × (1+r)^n / ((1+r)^n − 1)
- */
+
 export function calculateEmi(
   principal: number,
   annualRatePercent: number,
@@ -16,9 +13,7 @@ export function calculateEmi(
   return (principal * r * factor) / (factor - 1);
 }
 
-/**
- * Inverse: given an EMI ceiling, rate, tenure → max loan amount.
- */
+
 export function maxPrincipalForEmi(
   emiCeiling: number,
   annualRatePercent: number,
@@ -40,9 +35,7 @@ export interface TenureComparison {
   maxLoanForEmi: number;
 }
 
-/**
- * Compare EMI and total interest across tenure options for a given principal and rate.
- */
+
 export function compareTenures(
   principal: number,
   annualRatePercent: number,
