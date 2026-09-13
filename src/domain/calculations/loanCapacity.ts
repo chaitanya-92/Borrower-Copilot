@@ -70,7 +70,7 @@ export function computeLoanCapacity(input: LoanCapacityInput): LoanCapacityResul
     householdExpenses
   );
 
-  let safeMaxEmi = Math.min(foirBasedSafeEmi, cashFlowBasedSafeEmi);
+  const safeMaxEmi = Math.min(foirBasedSafeEmi, cashFlowBasedSafeEmi);
   let limitingFactor: LoanCapacityResult["limitingFactor"] = "both";
   if (safeMaxEmi === foirBasedSafeEmi && safeMaxEmi < cashFlowBasedSafeEmi) {
     limitingFactor = "foir";

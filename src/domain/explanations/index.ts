@@ -1,7 +1,7 @@
 import type {
   AssessmentAnswers,
   EmploymentType,
-  VerdictResult,
+  VerdictOutput,
 } from "@/types/assessment";
 import type { LoanCapacityResult } from "@/domain/calculations/loanCapacity";
 import type { RateBandResult } from "@/domain/rules/rate.rules";
@@ -73,7 +73,7 @@ export function buildAllInCostExplanation(aprMin: number, aprMax: number): {
   };
 }
 
-export function buildVerdictExplanation(verdict: VerdictResult, requestedEmi: number, safeMaxEmi: number): string {
+export function buildVerdictExplanation(verdict: VerdictOutput, requestedEmi: number, safeMaxEmi: number): string {
   if (verdict.verdict === "borrow") {
     return `Your requested EMI (₹${requestedEmi.toLocaleString("en-IN")}) is within the borrower-safe ceiling (₹${safeMaxEmi.toLocaleString("en-IN")}).`;
   }

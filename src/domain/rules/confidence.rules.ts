@@ -70,7 +70,6 @@ export function isAnswered(answers: AssessmentAnswers, field: string): boolean {
   if (answers.skippedFields.includes(field)) return false;
   const value = answers[field as keyof AssessmentAnswers];
   if (value === null || value === undefined) return false;
-  if (value === "") return false;
   return true;
 }
 

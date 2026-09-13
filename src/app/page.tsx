@@ -304,13 +304,13 @@ export default function HomePage() {
               </p>
 
               <h2 className="mt-2 text-2xl font-bold tracking-tight text-white sm:text-3xl">
-                The goal isn't to borrow the most.
+                The goal isn&apos;t to borrow the most.
               </h2>
             </div>
 
             <p className="max-w-md text-sm leading-6 text-slate-400 sm:text-right">
-              It's to choose an amount and EMI you can comfortably repay — even
-              when your income or expenses don't go exactly to plan.
+              It&apos;s to choose an amount and EMI you can comfortably repay — even
+              when your income or expenses don&apos;t go exactly to plan.
             </p>
           </div>
         </div>
@@ -326,7 +326,7 @@ export default function HomePage() {
           <p className="text-xs leading-5 text-slate-500">
             Borrower Copilot provides an educational estimate, not a loan
             approval or lender offer. Results depend on the information you
-            provide and may differ from a lender's actual assessment.
+            provide and may differ from a lender&apos;s actual assessment.
           </p>
         </div>
       </section>
